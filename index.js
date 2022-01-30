@@ -161,6 +161,7 @@ async function main() {
     } catch (e) {
       console.log(e);
       provider = new ethers.providers.JsonRpcProvider(process.env.RPC_URL);
+      return
     }
   }
 }
