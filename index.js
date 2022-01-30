@@ -1,61 +1,11 @@
 const abiDecoder = require("abi-decoder");
 const { ethers } = require("ethers");
+const abi = require("./abi.json");
+const fs = require('fs');
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 require("dotenv").config();
 
-const abi = [
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "uint256",
-        name: "tokenId",
-        type: "uint256",
-      },
-      {
-        indexed: false,
-        internalType: "string",
-        name: "addIn",
-        type: "string",
-      },
-      {
-        indexed: false,
-        internalType: "string",
-        name: "dropOut",
-        type: "string",
-      },
-    ],
-    name: "UsernameSet",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "sender",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256",
-      },
-      {
-        indexed: false,
-        internalType: "string",
-        name: "username",
-        type: "string",
-      },
-    ],
-    name: "TopUp",
-    type: "event",
-  },
-];
 
 abiDecoder.addABI(abi);
 
@@ -116,7 +66,7 @@ async function addWhitelist(username) {
     );
 
     const mc_uuid = (await mc_uuid_response.json()).data.player.id;
-
+    console.log(mc_uuid);
     const response = await fetch(`${process.env.HOST}/v1/server/whitelist`, {
       method: "POST",
       headers: {
@@ -128,7 +78,6 @@ async function addWhitelist(username) {
         uuid: mc_uuid,
       }),
     });
-    console.log(response);
     return response;
   } catch (e) {
     console.error(e);
@@ -148,7 +97,6 @@ async function removeWhitelist(username) {
         time: 3,
       }),
     });
-    console.log(response);
     return response;
   } catch (e) {
     console.error(e);
@@ -158,7 +106,12 @@ async function removeWhitelist(username) {
 async function main() {
   let provider = new ethers.providers.JsonRpcProvider(process.env.RPC_URL);
 
-  let lastProcessedBlock = (await provider.getBlockNumber()) - 10;
+
+  const lastProcessedBlockFromFile = fs.readFileSync("lastProcessedBlock.txt", "utf8")
+  console.log("resume from block:",lastProcessedBlockFromFile)
+
+  let lastProcessedBlock = parseInt(lastProcessedBlockFromFile)
+  // let lastProcessedBlock = (await provider.getBlockNumber()) - 10;
 
   while (true) {
     try {
@@ -203,6 +156,7 @@ async function main() {
       );
 
       lastProcessedBlock = currentBlock;
+      fs.writeFileSync("lastProcessedBlock.txt", lastProcessedBlock.toString());
       await sleep(100);
     } catch (e) {
       console.log(e);
@@ -212,3 +166,7 @@ async function main() {
 }
 
 main();
+// process.on('uncaughtException', function () {
+//   fs.writeFileSync("lastProcessedBlock.txt", lastProcessedBlock);
+// });
+
