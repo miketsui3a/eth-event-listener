@@ -46,7 +46,6 @@ async function topup(username, amount) {
         time: 3,
       }),
     });
-    console.log(await response.text());
     return response;
   } catch (e) {
     console.error(e);
@@ -66,7 +65,6 @@ async function addWhitelist(username) {
     );
 
     const mc_uuid = (await mc_uuid_response.json()).data.player.id;
-    console.log(mc_uuid);
     const response = await fetch(`${process.env.HOST}/v1/server/whitelist`, {
       method: "POST",
       headers: {
@@ -109,6 +107,11 @@ async function main() {
 
   const lastProcessedBlockFromFile = fs.readFileSync("lastProcessedBlock.txt", "utf8")
   console.log("resume from block:",lastProcessedBlockFromFile)
+  console.log(process.env.HOST)
+  console.log(process.env.NFT)
+  console.log(process.env.COIN)
+  console.log(process.env.SERVER_KEY)
+  console.log(process.env.RPC_URL)
 
   let lastProcessedBlock = parseInt(lastProcessedBlockFromFile)
   // let lastProcessedBlock = (await provider.getBlockNumber()) - 10;
@@ -118,7 +121,7 @@ async function main() {
       let currentBlock = await provider.getBlockNumber();
       console.log(currentBlock);
       if (lastProcessedBlock == currentBlock) {
-        console.log("no new block");
+        // console.log("no new block");
         continue;
       }
 
@@ -129,7 +132,7 @@ async function main() {
       });
 
       const coinLogs = provider.getLogs({
-        address: process.env.Coin,
+        address: process.env.COIN,
         fromBlock: lastProcessedBlock + 1,
         toBlock: currentBlock,
       });
@@ -142,18 +145,18 @@ async function main() {
       );
       const topUpLogs = decodedLogs.filter((log) => log.name === "TopUp");
 
-      console.log(topUpLogs[0]);
+      // console.log(topUpLogs[0]);
       nameSetHandler(nameSetLogs);
       topUpHandler(topUpLogs);
 
-      console.log(
-        "set name log:",
-        nameSetLogs.map((l) => l.address)
-      );
-      console.log(
-        "top up log:",
-        topUpLogs.map((l) => l.address)
-      );
+      // console.log(
+      //   "set name log:",
+      //   nameSetLogs.map((l) => l.address)
+      // );
+      // console.log(
+      //   "top up log:",
+      //   topUpLogs.map((l) => l.address)
+      // );
 
       lastProcessedBlock = currentBlock;
       fs.writeFileSync("lastProcessedBlock.txt", lastProcessedBlock.toString());
